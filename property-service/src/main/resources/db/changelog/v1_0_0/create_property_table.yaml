@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: Serg
+      changes:
+        - createTable:
+            tableName: property
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: address
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal(15, 2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: bedrooms
+                  type: tinyint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+#        - addCheckConstraint:
+##            tableName: property
+##            constraintName: price_check
+##            constraintBody: "price >= 0"
+
+  - changeSet:
+      id: 1
+      author: Serg
+      changes:
+        - sql:
+            sql: "ALTER TABLE property ADD CONSTRAINT check_price CHECK (price >= 0);"
+
