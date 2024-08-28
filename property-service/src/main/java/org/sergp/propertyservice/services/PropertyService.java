@@ -1,9 +1,11 @@
 package org.sergp.propertyservice.services;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sergp.propertyservice.dto.PropertyDTO;
 import org.sergp.propertyservice.dto.PropertyUpdate;
+import org.sergp.propertyservice.exceptions.AccessDeniedException;
 import org.sergp.propertyservice.exceptions.PropertyAlreadyExistException;
 import org.sergp.propertyservice.exceptions.PropertyNotFoundException;
 import org.sergp.propertyservice.mappers.PropertyMapper;
@@ -25,25 +27,30 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
 
-    public PropertyDTO createProperty(Property property) {
-        if (isPropertyExist(property.getAddress())) {
-            throw new PropertyAlreadyExistException("Address already exist");
-        }
-        property.setOwnerId(UUID.randomUUID()); // TODO change owner id
-        property.setStatus(true); // true - is active / false - is inactive
-        return PropertyMapper.INSTANCE.propertyToPropertyDTO(propertyRepository.save(property));
+    public PropertyDTO findById(UUID uuid) {
+        return PropertyMapper.INSTANCE.propertyToPropertyDTO(getById(uuid));
     }
 
     public List<PropertyDTO> getAllProperties(){
         return PropertyMapper.INSTANCE.propertiesListToPropertyDTOs(propertyRepository.findAll());
     }
 
-    public PropertyDTO findById(UUID uuid) {
-        return PropertyMapper.INSTANCE.propertyToPropertyDTO(getById(uuid));
+    public PropertyDTO createProperty(Property property, HttpServletRequest request) {
+        if (isPropertyExist(property.getAddress())) {
+            throw new PropertyAlreadyExistException("Address already exist");
+        }
+        property.setOwnerId(UUID.fromString(request.getHeader("id"))); // TODO change owner id
+        property.setStatus(true); // true - is active / false - is inactive
+        return PropertyMapper.INSTANCE.propertyToPropertyDTO(propertyRepository.save(property));
     }
 
-    public PropertyDTO updateProperty(PropertyUpdate propertyUpdate, UUID uuid) {
+
+    public PropertyDTO updateProperty(PropertyUpdate propertyUpdate, UUID uuid, HttpServletRequest request) {
         Property currentProperty = getById(uuid);
+
+        if (!currentProperty.getOwnerId().equals(UUID.fromString(request.getHeader("id")))){
+            throw new AccessDeniedException("You are not owner of this property");
+        }
         // change address
         if(propertyUpdate.getAddress() != null && !propertyUpdate.getAddress().isBlank()){
             currentProperty.setAddress(propertyUpdate.getAddress());
@@ -63,8 +70,12 @@ public class PropertyService {
 
         return PropertyMapper.INSTANCE.propertyToPropertyDTO(propertyRepository.save(currentProperty));
     }
-
-    public void deletePropertyById(UUID uuid){
+    //TODO check this method try catch block
+    public void deletePropertyById(UUID uuid, HttpServletRequest request){
+        Property property = getById(uuid);
+        if (!property.getOwnerId().equals(UUID.fromString(request.getHeader("id")))){
+            throw new AccessDeniedException("You are not owner of this property");
+        }
         try {
             propertyRepository.deleteById(uuid);
         }
@@ -73,8 +84,11 @@ public class PropertyService {
         }
     }
 
-    public Boolean changeStatus(UUID uuid) {
+    public Boolean changeStatus(UUID uuid, HttpServletRequest request) {
         Property property = getById(uuid);
+        if (!property.getOwnerId().equals(UUID.fromString(request.getHeader("id")))){
+            throw new AccessDeniedException("You are not owner of this property");
+        }
         property.setStatus(!property.getStatus());
         propertyRepository.save(property);
         return property.getStatus();

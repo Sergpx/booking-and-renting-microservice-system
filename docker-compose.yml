@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  booking-service-db:
+    image: postgres:latest
+    container_name: booking-service-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=142536
+      - POSTGRES_DB=booking-service-db
+    ports:
+      - "5433:5432"
+    volumes:
+      - "booking-service-db-data:/var/lib/postgresql/data"
+
+  property-service-db:
+    image: postgres:latest
+    container_name: property-service-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=142536
+      - POSTGRES_DB=property-service-db
+    ports:
+      - "5434:5432"
+    volumes:
+      - "property-service-db-data:/var/lib/postgresql/data"
+
+  review-service-db:
+    image: postgres:latest
+    container_name: review-service-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=142536
+      - POSTGRES_DB=review-service-db
+    ports:
+      - "5435:5432"
+    volumes:
+      - "review-service-db-data:/var/lib/postgresql/data"
+
+  user-service-db:
+    image: postgres:latest
+    container_name: user-service-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=142536
+      - POSTGRES_DB=user-service-db
+    ports:
+      - "5436:5432"
+    volumes:
+      - "user-service-db-data:/var/lib/postgresql/data"
+
+
+volumes:
+  booking-service-db-data:
+    driver: local
+  property-service-db-data:
+    driver: local
+  review-service-db-data:
+    driver: local
+  user-service-db-data:
+    driver: local

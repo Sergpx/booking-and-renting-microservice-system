@@ -1,7 +1,9 @@
 package org.sergp.propertyservice.controllers;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.sergp.propertyservice.dto.PropertyDTO;
 import org.sergp.propertyservice.dto.PropertyUpdate;
@@ -38,25 +40,25 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<PropertyDTO> createProperty(@RequestBody Property property) {
+    public ResponseEntity<PropertyDTO> createProperty(@RequestBody Property property, HttpServletRequest request) {
         log.info(property.toString());
-        return ResponseEntity.status(HttpStatus.CREATED).body(propertyService.createProperty(property));
+        return ResponseEntity.status(HttpStatus.CREATED).body(propertyService.createProperty(property, request));
     }
 
     @PatchMapping("/{uuid}")
-    public ResponseEntity<PropertyDTO> updateProperty(@RequestBody PropertyUpdate propertyUpdate, @PathVariable UUID uuid) {
-        return ResponseEntity.status(HttpStatus.OK).body(propertyService.updateProperty(propertyUpdate, uuid));
+    public ResponseEntity<PropertyDTO> updateProperty(@RequestBody PropertyUpdate propertyUpdate, @PathVariable UUID uuid, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(propertyService.updateProperty(propertyUpdate, uuid, request));
     }
 
     @DeleteMapping("/{uuid}")
-    public ResponseEntity<String> deleteProperty(@PathVariable UUID uuid) {
-        propertyService.deletePropertyById(uuid);
+    public ResponseEntity<String> deleteProperty(@PathVariable UUID uuid, HttpServletRequest request) {
+        propertyService.deletePropertyById(uuid, request);
         return ResponseEntity.status(HttpStatus.OK).body("Property deleted");
     }
 
     @PatchMapping("/{uuid}/changeStatus")
-    public ResponseEntity<String> changeStatus(@PathVariable UUID uuid) {
-        Boolean status = propertyService.changeStatus(uuid);
+    public ResponseEntity<String> changeStatus(@PathVariable UUID uuid, HttpServletRequest request) {
+        Boolean status = propertyService.changeStatus(uuid, request);
         return ResponseEntity.status(HttpStatus.OK).body("Property status changed to " + (status ? "active" : "inactive"));
     }
 

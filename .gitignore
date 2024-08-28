@@ -1,0 +1,33 @@
+# Папки и файлы IDE
+.idea/
+.classpath
+.project
+.settings/
+*.iml
+
+# Maven / Gradle
+target/
+build/
+*.jar
+*.war
+*.ear
+*.class
+
+# Логи
+*.log
+
+# Локальные файлы среды разработки
+*.swp
+*.swo
+
+# Кэш и временные файлы
+.DS_Store
+.project
+.classpath
+.metadata
+*.tmp
+
+# Исключить конфигурационные файлы с секретами
+application-secrets.properties
+application-secrets.yml
+

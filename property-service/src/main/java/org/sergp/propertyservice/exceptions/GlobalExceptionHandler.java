@@ -35,6 +35,12 @@ public class GlobalExceptionHandler{
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handlePropertyNotFoundException(AccessDeniedException ex, WebRequest request) {
+        logError(ex, request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
 
 
 // private methods
