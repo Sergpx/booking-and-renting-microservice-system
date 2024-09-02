@@ -2,7 +2,8 @@ package org.sergp.propertyservice.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import org.sergp.propertyservice.dto.PropertyDTO;
+import org.sergp.propertyservice.dto.PropertyRequest;
+import org.sergp.propertyservice.dto.PropertyResponse;
 import org.sergp.propertyservice.models.Property;
 
 import java.util.List;
@@ -12,7 +13,12 @@ public interface PropertyMapper {
 
     PropertyMapper INSTANCE = Mappers.getMapper(PropertyMapper.class);
 
-    PropertyDTO propertyToPropertyDTO(Property property);
-    List<PropertyDTO> propertiesListToPropertyDTOs(List<Property> properties);
+    // PropertyRequest
+    PropertyRequest propertyToPropertyRequest(Property property);
+    Property propertyRequestToProperty(PropertyRequest propertyRequest);
+    List<PropertyResponse> propertiesListToPropertyResponses(List<Property> properties);
 
+    // PropertyResponse
+    PropertyResponse propertyToPropertyResponse(Property property);
+    Property propertyResponseToProperty(PropertyResponse propertyResponse);
 }

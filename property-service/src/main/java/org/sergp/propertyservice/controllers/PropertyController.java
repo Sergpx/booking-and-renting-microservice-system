@@ -2,12 +2,13 @@ package org.sergp.propertyservice.controllers;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
-import org.sergp.propertyservice.dto.PropertyDTO;
+import org.sergp.propertyservice.dto.PropertyRequest;
+import org.sergp.propertyservice.dto.PropertyResponse;
 import org.sergp.propertyservice.dto.PropertyUpdate;
-import org.sergp.propertyservice.models.Property;
 import org.sergp.propertyservice.services.PropertyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,35 +19,35 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/properties")
+@RequestMapping("/api/properties")
 @Slf4j
 public class PropertyController {
 
     private final PropertyService propertyService;
 
     @GetMapping
-    public ResponseEntity<List<PropertyDTO>> getAllProperties() {
+    public ResponseEntity<List<PropertyResponse>> getAllProperties() {
         return ResponseEntity.status(HttpStatus.OK).body(propertyService.getAllProperties());
     }
 
     @GetMapping("/active")
-    public ResponseEntity<List<PropertyDTO>> getAllActiveProperties() {
+    public ResponseEntity<List<PropertyResponse>> getAllActiveProperties() {
         return ResponseEntity.status(HttpStatus.OK).body(propertyService.getAllActiveProperties());
     }
 
     @GetMapping("/{uuid}")
-    public ResponseEntity<PropertyDTO> findById(@PathVariable UUID uuid) {
+    public ResponseEntity<PropertyResponse> findById(@PathVariable UUID uuid) {
         return ResponseEntity.status(HttpStatus.OK).body(propertyService.findById(uuid));
     }
 
     @PostMapping
-    public ResponseEntity<PropertyDTO> createProperty(@RequestBody Property property, HttpServletRequest request) {
-        log.info(property.toString());
-        return ResponseEntity.status(HttpStatus.CREATED).body(propertyService.createProperty(property, request));
+    public ResponseEntity<PropertyResponse> createProperty(@RequestBody PropertyRequest propertyRequest, HttpServletRequest request) {
+        log.info(propertyRequest.toString());
+        return ResponseEntity.status(HttpStatus.CREATED).body(propertyService.createProperty(propertyRequest, request));
     }
 
     @PatchMapping("/{uuid}")
-    public ResponseEntity<PropertyDTO> updateProperty(@RequestBody PropertyUpdate propertyUpdate, @PathVariable UUID uuid, HttpServletRequest request) {
+    public ResponseEntity<PropertyResponse> updateProperty(@Valid @RequestBody PropertyUpdate propertyUpdate, @PathVariable UUID uuid, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.OK).body(propertyService.updateProperty(propertyUpdate, uuid, request));
     }
 
@@ -62,4 +63,10 @@ public class PropertyController {
         return ResponseEntity.status(HttpStatus.OK).body("Property status changed to " + (status ? "active" : "inactive"));
     }
 
+    @GetMapping("/{id}/isPropertyActive")
+    public ResponseEntity<?> isPropertyActive(@PathVariable UUID id) {
+        return ResponseEntity.status(HttpStatus.OK).body(propertyService.isPropertyActive(id));
+    }
+
+    // TODO add property search filters
 }

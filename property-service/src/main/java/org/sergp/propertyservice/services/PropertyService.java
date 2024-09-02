@@ -3,8 +3,7 @@ package org.sergp.propertyservice.services;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sergp.propertyservice.dto.PropertyDTO;
-import org.sergp.propertyservice.dto.PropertyUpdate;
+import org.sergp.propertyservice.dto.*;
 import org.sergp.propertyservice.exceptions.AccessDeniedException;
 import org.sergp.propertyservice.exceptions.PropertyAlreadyExistException;
 import org.sergp.propertyservice.exceptions.PropertyNotFoundException;
@@ -15,7 +14,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,49 +27,61 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
 
-    public PropertyDTO findById(UUID uuid) {
-        return PropertyMapper.INSTANCE.propertyToPropertyDTO(getById(uuid));
+    @Transactional(readOnly = true)
+    public PropertyResponse findById(UUID uuid) {
+        return PropertyMapper.INSTANCE.propertyToPropertyResponse(getById(uuid));
+    }
+    @Transactional(readOnly = true)
+    public List<PropertyResponse> getAllProperties(){
+        return PropertyMapper.INSTANCE.propertiesListToPropertyResponses(propertyRepository.findAll());
     }
 
-    public List<PropertyDTO> getAllProperties(){
-        return PropertyMapper.INSTANCE.propertiesListToPropertyDTOs(propertyRepository.findAll());
-    }
-
-    public PropertyDTO createProperty(Property property, HttpServletRequest request) {
-        if (isPropertyExist(property.getAddress())) {
+    public PropertyResponse createProperty(PropertyRequest propertyRequest, HttpServletRequest request) {
+        if (isPropertyExist(propertyRequest.getAddress())) {
             throw new PropertyAlreadyExistException("Address already exist");
         }
-        property.setOwnerId(UUID.fromString(request.getHeader("id"))); // TODO change owner id
+        Property property = PropertyMapper.INSTANCE.propertyRequestToProperty(propertyRequest);
+        property.setOwnerId(UUID.fromString(request.getHeader("id")));
         property.setStatus(true); // true - is active / false - is inactive
-        return PropertyMapper.INSTANCE.propertyToPropertyDTO(propertyRepository.save(property));
+        property.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        property.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        return PropertyMapper.INSTANCE.propertyToPropertyResponse(propertyRepository.save(property));
     }
 
 
-    public PropertyDTO updateProperty(PropertyUpdate propertyUpdate, UUID uuid, HttpServletRequest request) {
+
+    public PropertyResponse updateProperty(PropertyUpdate propertyUpdate, UUID uuid, HttpServletRequest request) {
         Property currentProperty = getById(uuid);
 
         if (!currentProperty.getOwnerId().equals(UUID.fromString(request.getHeader("id")))){
             throw new AccessDeniedException("You are not owner of this property");
         }
         // change address
-        if(propertyUpdate.getAddress() != null && !propertyUpdate.getAddress().isBlank()){
+        if(propertyUpdate.getAddress() != null){
             currentProperty.setAddress(propertyUpdate.getAddress());
         }
+        // change title
+        if(propertyUpdate.getTitle() != null) {
+            currentProperty.setTitle(propertyUpdate.getTitle());
+        }
         // change description
-        if(propertyUpdate.getDescription() != null && !propertyUpdate.getDescription().isBlank()){
+        if(propertyUpdate.getDescription() != null){
             currentProperty.setDescription(propertyUpdate.getDescription());
         }
         // change price
-        if(propertyUpdate.getPrice() != null && propertyUpdate.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+        if(propertyUpdate.getPrice() != null) {
             currentProperty.setPrice(propertyUpdate.getPrice());
         }
         // change beds
-        if(propertyUpdate.getBedrooms() != null && propertyUpdate.getBedrooms() > 0) {
+        if(propertyUpdate.getBedrooms() != null ) {
             currentProperty.setBedrooms(propertyUpdate.getBedrooms());
         }
 
-        return PropertyMapper.INSTANCE.propertyToPropertyDTO(propertyRepository.save(currentProperty));
+        currentProperty.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+
+        return PropertyMapper.INSTANCE.propertyToPropertyResponse(propertyRepository.save(currentProperty));
     }
+
     //TODO check this method try catch block
     public void deletePropertyById(UUID uuid, HttpServletRequest request){
         Property property = getById(uuid);
@@ -90,12 +102,24 @@ public class PropertyService {
             throw new AccessDeniedException("You are not owner of this property");
         }
         property.setStatus(!property.getStatus());
+        property.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         propertyRepository.save(property);
         return property.getStatus();
     }
 
-    public List<PropertyDTO> getAllActiveProperties() {
-        return PropertyMapper.INSTANCE.propertiesListToPropertyDTOs(propertyRepository.findPropertyByStatusIsTrue());
+    @Transactional(readOnly = true)
+    public List<PropertyResponse> getAllActiveProperties() {
+        return PropertyMapper.INSTANCE.propertiesListToPropertyResponses(propertyRepository.findPropertyByStatusIsTrue());
+    }
+
+    // TODO Think about this method
+    @Transactional(readOnly = true)
+    public PropertyAvailableResponse isPropertyActive(UUID id) {
+        Property property = getById(id);
+        return PropertyAvailableResponse.builder()
+                .status(property.getStatus())
+                .price(property.getPrice())
+                .build();
     }
 
 // private methods
