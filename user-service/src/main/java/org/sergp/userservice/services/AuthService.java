@@ -22,6 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -44,6 +46,8 @@ public class AuthService {
                 .password(passwordEncoder.encode(authRequest.getPassword()))
                 .email(authRequest.getEmail())
                 .role(Role.ROLE_USER)
+                .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
+                .updatedAt(OffsetDateTime.now(ZoneOffset.UTC))
         .build();
 
         return UserMapper.INSTANCE.userToUserDTO(userRepository.save(newUser));
@@ -62,7 +66,7 @@ public class AuthService {
     }
 
     public ValidationTokenResponse validateToken(HttpServletRequest request) {
-        String token = request.getHeader("Authorization"); // TODO check
+        String token = request.getHeader("Authorization");
         String username = jwtService.extractUsername(token);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User not found"));
         MyUserDetails userDetails = new MyUserDetails(user);

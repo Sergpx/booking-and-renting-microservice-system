@@ -1,12 +1,12 @@
 package org.sergp.userservice.models;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -20,15 +20,12 @@ public class User {
     @Id
     @GeneratedValue
     @Column(name = "id")
-    @NotNull
     private UUID id;
 
     @Column(name = "username")
-    @NotNull
     private String username;
 
     @Column(name = "password")
-    @NotNull
     private String password;
 
     @Column(name = "email")
@@ -36,8 +33,13 @@ public class User {
 
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
-    @NotNull
     private Role role;
+
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
 
 }

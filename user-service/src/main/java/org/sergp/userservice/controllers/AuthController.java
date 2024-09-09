@@ -1,32 +1,29 @@
 package org.sergp.userservice.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.sergp.userservice.dto.AuthRequest;
 import org.sergp.userservice.dto.LoginRequest;
 import org.sergp.userservice.services.AuthService;
-import org.sergp.userservice.services.JWTService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
 
-    @RequestMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest authRequest){
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody AuthRequest authRequest){
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(authRequest));
     }
 
-    @RequestMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest){
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest){
         return ResponseEntity.status(HttpStatus.OK).body(authService.login(loginRequest));
     }
 
