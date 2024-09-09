@@ -1,19 +1,19 @@
-package org.sergp.bookingservice.kafka;
+package org.sergp.bookingservice.kafka.message;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.sergp.bookingservice.models.Status;
 
 import java.util.UUID;
 
+
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class PaymentConfirmationEvent {
+@Builder
+public class CanceledPaymentEvent {
 
     private UUID bookingId;
-
-    private Status status;
 
 }

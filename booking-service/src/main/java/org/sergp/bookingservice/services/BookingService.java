@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sergp.bookingservice.dto.BookingCreateRequest;
 import org.sergp.bookingservice.exceptions.*;
-import org.sergp.bookingservice.kafka.CanceledPaymentEvent;
-import org.sergp.bookingservice.kafka.InitiatePaymentCommand;
+import org.sergp.bookingservice.kafka.message.CanceledPaymentEvent;
+import org.sergp.bookingservice.kafka.message.InitiatePaymentCommand;
 import org.sergp.bookingservice.dto.PropertyAvailableResponse;
 import org.sergp.bookingservice.models.Booking;
 import org.sergp.bookingservice.models.Status;
@@ -37,7 +37,7 @@ public class BookingService {
     private final String IS_PROPERTY_ACTIVE_URL = "lb://property-service/api/properties/{id}/isPropertyActive";
 
     private final String INITIATE_PAYMENT_TOPIC = "initiate-payment-topic";
-    private final String CANCELED_PAYMENT_TOPIC = "canceled-payment-topic";
+    private final String CANCEL_PAYMENT_TOPIC = "cancel-payment-topic";
 
 
     public List<Booking> getUserBookings(HttpServletRequest request) {
@@ -91,14 +91,13 @@ public class BookingService {
                 .build();
 
         initiatePaymentCommandTemplate.send(INITIATE_PAYMENT_TOPIC, String.valueOf(newBooking.getId()), initiatePaymentCommand);
-        log.info("Message sent");
+        log.info("Message in Kafka sent");
 
         return newBooking;
 
     }
 
     public void cancelBooking(UUID id, HttpServletRequest request) {
-
         Booking booking = findById(id);
         if(!booking.getUserId().equals(UUID.fromString(request.getHeader("id")))){
             throw new AccessDeniedException("You can only cancel your own booking");
@@ -106,7 +105,7 @@ public class BookingService {
         if(!(booking.getStatus() == Status.COMPLETED)){
             throw new WrongStatusException("You can cancel only completed bookings");
         }
-        booking.setStatus(Status.CANCELLED);
+        booking.setStatus(Status.REFUND_PROCESS);
         booking.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         bookingRepository.save(booking);
         CanceledPaymentEvent canceledPaymentEvent = CanceledPaymentEvent
@@ -114,8 +113,8 @@ public class BookingService {
                 .bookingId(id)
                 .build();
 
-        canceledPaymentEventTemplate.send(CANCELED_PAYMENT_TOPIC, canceledPaymentEvent);
-        log.info("Message sent");
+        canceledPaymentEventTemplate.send(CANCEL_PAYMENT_TOPIC, canceledPaymentEvent);
+        log.info("Cancelled payment event sent to Kafka {}", canceledPaymentEvent);
     }
 
 
@@ -129,7 +128,7 @@ public class BookingService {
                 .header("Authorization", request.getHeader("auth-token")) // TEST WITHOUT AUTH
                 .retrieve()
                 .bodyToMono(PropertyAvailableResponse.class)
-                .doOnError(error -> { log.error(error.getMessage());})
+                .doOnError(error -> log.error(error.getMessage()))
                 .block();
 
     }

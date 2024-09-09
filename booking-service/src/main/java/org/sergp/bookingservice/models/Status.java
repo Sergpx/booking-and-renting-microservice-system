@@ -4,5 +4,6 @@ public enum Status {
     PENDING_PAYMENT,
     CANCELLED,
     COMPLETED,
-    EXPIRED
+    EXPIRED,
+    REFUND_PROCESS
 }

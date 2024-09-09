@@ -47,11 +47,13 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.createBooking(booking, request));
     }
 
-    @PostMapping("/cancelBooking/{id}")
+    @DeleteMapping("/{id}/cancel")
     public ResponseEntity<?> cancelBooking(@PathVariable UUID id, HttpServletRequest request) {
         bookingService.cancelBooking(id, request);
-        return ResponseEntity.status(HttpStatus.OK).body("Booking cancelled successfully");
+        return ResponseEntity.status(HttpStatus.OK).body("Cancellation of the booking in progress");
     }
+
+    // add admin endpoints
 
 
 
