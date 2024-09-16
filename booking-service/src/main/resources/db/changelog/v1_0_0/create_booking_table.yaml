@@ -17,13 +17,11 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: user_id
                   type: uuid
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: start_date
                   type: TIMESTAMP WITHOUT TIME ZONE

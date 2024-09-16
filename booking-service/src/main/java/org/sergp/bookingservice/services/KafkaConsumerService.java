@@ -33,7 +33,7 @@ public class KafkaConsumerService {
     private final String REFUND_EMAIL_NOTIFICATION_TOPIC = "refund-email-notification";
 
 
-    @Transactional
+    @Transactional(transactionManager = "transactionManager")
     @KafkaListener(topics = PAYMENT_CONFIRMATION_EVENT_TOPIC, groupId = "payment-confirmation-group", containerFactory = "PaymentConfirmationEventContainerFactory")
     public void paymentConfirmationEvent(PaymentConfirmationEvent paymentMessage, Acknowledgment acknowledgment) {
 
@@ -46,7 +46,8 @@ public class KafkaConsumerService {
             acknowledgment.acknowledge();
         }
     }
-    @Transactional
+
+    @Transactional(transactionManager = "RefundEmailNotificationKafkaTransactionManager")
     @KafkaListener(topics = REFUND_SUCCESS_TOPIC, groupId = "refund-success-message-group", containerFactory = "RefundSuccessMessageContainerFactory")
     public void refundSuccessMessage(RefundSuccessMessage refundMessage, Acknowledgment acknowledgment) {
         Booking booking = getBookingByUUID(refundMessage.getBookingId());

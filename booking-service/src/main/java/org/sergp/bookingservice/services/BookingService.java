@@ -26,7 +26,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
+//@Transactional
 public class BookingService {
 
     private final BookingRepository bookingRepository;
@@ -55,13 +55,17 @@ public class BookingService {
 
     }
 
+    @Transactional(transactionManager = "transactionManager")
     public Booking createBooking(BookingCreateRequest booking, HttpServletRequest request) {
         OffsetDateTime startDate = booking.getStartDate().atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
         OffsetDateTime endDate = booking.getEndDate().atStartOfDay(ZoneOffset.UTC).toOffsetDateTime();
+
         if(!endDate.isAfter(startDate)){
             throw new IncorrectDateException("End date should be after start date");
         }
+
         PropertyAvailableResponse propertyAvailableResponse = getPropertyResponse(booking.getPropertyId(), request);
+
         if(!propertyAvailableResponse.getStatus() ||
                 bookingRepository.countBookingsInDateRange(booking.getPropertyId(), startDate, endDate) != 0){
             throw new BookingNotAvailableException("Property is not available");
@@ -81,22 +85,26 @@ public class BookingService {
 
         bookingRepository.save(newBooking);
 
-        long days = Duration.between(startDate, endDate).toDays();
-        InitiatePaymentCommand initiatePaymentCommand = InitiatePaymentCommand
-                .builder()
-                .bookingId(newBooking.getId())
-                .userId(newBooking.getUserId())
-                .amount(propertyAvailableResponse.getPrice().multiply(BigDecimal.valueOf(days)))
-                .email(booking.getEmail())
-                .build();
+        initiatePaymentCommandTemplate.executeInTransaction((operations) -> {
+            long days = Duration.between(startDate, endDate).toDays();
+            InitiatePaymentCommand initiatePaymentCommand = InitiatePaymentCommand
+                    .builder()
+                    .bookingId(newBooking.getId())
+                    .userId(newBooking.getUserId())
+                    .amount(propertyAvailableResponse.getPrice().multiply(BigDecimal.valueOf(days)))
+                    .email(booking.getEmail())
+                    .build();
 
-        initiatePaymentCommandTemplate.send(INITIATE_PAYMENT_TOPIC, String.valueOf(newBooking.getId()), initiatePaymentCommand);
-        log.info("Message in Kafka sent");
+            initiatePaymentCommandTemplate.send(INITIATE_PAYMENT_TOPIC, String.valueOf(newBooking.getId()), initiatePaymentCommand);
+            log.info("Message in Kafka sent");
+            return null;
+        });
+            return newBooking;
 
-        return newBooking;
 
     }
 
+    @Transactional(transactionManager = "transactionManager")
     public void cancelBooking(UUID id, HttpServletRequest request) {
         Booking booking = findById(id);
         if(!booking.getUserId().equals(UUID.fromString(request.getHeader("id")))){
@@ -112,9 +120,11 @@ public class BookingService {
                 .builder()
                 .bookingId(id)
                 .build();
-
-        canceledPaymentEventTemplate.send(CANCEL_PAYMENT_TOPIC, canceledPaymentEvent);
-        log.info("Cancelled payment event sent to Kafka {}", canceledPaymentEvent);
+        canceledPaymentEventTemplate.executeInTransaction(operations -> {
+            canceledPaymentEventTemplate.send(CANCEL_PAYMENT_TOPIC, canceledPaymentEvent);
+            log.info("Cancelled payment event sent to Kafka {}", canceledPaymentEvent);
+            return null;
+        });
     }
 
 
